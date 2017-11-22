@@ -685,6 +685,7 @@ void pthread_read()
 	
 	while(1)
 	{	
+		usleep(1000);
 		memset( buf, 0, SIZEBUF);
 		if((ret = read( fd, buf, SIZEBUF)) < 0)
 		{

@@ -1,5 +1,5 @@
 server : main.o get_id.o login.o pthread_spi.o pthread_read.o
-	arm-linux-gcc main.o get_id.o login.o pthread_spi.o pthread_read.o -pthread -lm  -o wifi_server
+	arm-linux-gcc main.o get_id.o login.o pthread_spi.o pthread_read.o -pthread -lm  -o wifis
 
 main.o : main.c
 	arm-linux-gcc main.c -c -o main.o

@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	
 	while(1)
 	{
-		
+		usleep(1000);
 		pthread_mutex_init (&mutex, NULL);
 
 		//打开UART通信句柄
@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 		//login登录函数
 		while(1)
 		{
+			usleep(1000);
 			ret = login();
 			if(ret == 1)
 			{

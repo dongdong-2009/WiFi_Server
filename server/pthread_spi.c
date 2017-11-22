@@ -1363,6 +1363,7 @@ void pthread_spi()
 	
 	while(1)
 	{
+		usleep(1000);
 		if(flag)
 		{
 			close(fdFpga);

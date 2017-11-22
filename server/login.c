@@ -15,8 +15,7 @@ int login()
 	char passwdbuf[DATALEN] = {0};
 	while(1)
 	{
-		// printf("fd = %d\n",fd);
-		// printf("**********login***************\n");
+		usleep(1000);
 		memset( buf, 0, SIZEBUF);
 		ret = read( fd, &buf, SIZEBUF);
 		if(ret == 0)
