@@ -508,7 +508,7 @@ static int wReg(char name[], int wdata)
 	return 0;
 }
 
-#if 0 
+
 static uint32_t rReg(char name[])
 {
 	int i, itmp;
@@ -534,7 +534,7 @@ static uint32_t rReg(char name[])
 	
 	return src_data;
 }
-#endif
+
 
 int change_passwd(char buf[])
 {
@@ -588,7 +588,7 @@ int set_WB(int cmd)
     int    fdWB;  
     struct termios  oldtio, newtio;  
 	char wbuf[1];
-	
+	uint32_t chnel;
 //-----------打开uart设备文件------------------  
     fdWB = open(UART_DEVICE, O_RDWR|O_NOCTTY);//没有设置 O_NONBLOCK，所以这里 read 和 write 是阻塞操作  
     if (fdWB < 0) {  
@@ -613,50 +613,81 @@ int set_WB(int cmd)
     tcsetattr(fdWB, TCSANOW, &newtio);//设置新的操作参数  
 
 	//------------向urat发送数据-------------------
-	
-	switch(cmd)
+	chnel = rReg("tx_symrate") & 0xff;
+	printf("tx_symrate = %d\n", chnel);
+	if(chnel == 32) //28M带宽
 	{
-		case 1:
-			wbuf[0] = 1; 
-			break;
-		case 2:
-			wbuf[0] = 2;
-			break;	
-		case 3:
-			wbuf[0] = 3;
-			break;
-		case 4:
-			wbuf[0] = 4;
-			break;	
-		case 5:
-			wbuf[0] = 'a'; 
-			break;
-		case 6:
-			wbuf[0] = 'b';
-			break;	
-		case 7:
-			wbuf[0] = 'c';
-			break;
-		case 8:
-			wbuf[0] = 'd';
-			break;	
-		case 9:
-			wbuf[0] = 'e'; 
-			break;
-		case 10:
-			wbuf[0] = 'f';
-			break;	
-		case 11:
-			wbuf[0] = 'g';
-			break;
-		case 12:
-			wbuf[0] = 'h';
-			break;	
-		default:
-			printf("set_WB cmd = %d\n", cmd);
+		printf("28M带宽\n");
+		switch(cmd)
+		{
+			case 1:
+				wbuf[0] = 31; 
+				break;
+			case 2:
+				wbuf[0] = 32;
+				break;	
+			case 3:
+				wbuf[0] = 33;
+				break;
+			case 4:
+				wbuf[0] = 34;
+				break;	
+			case 5:
+				wbuf[0] = 35; 
+				break;
+			case 6:
+				wbuf[0] = 36;
+				break;	
+			case 7:
+				wbuf[0] = 37;
+				break;
+			case 8:
+				wbuf[0] = 38;
+				break;		
+			default:
+				printf("set_WB cmd = %d\n", cmd);
+		}
+		write( fdWB, wbuf, 1);  
 	}
-	printf("set_WB cmd = %d", cmd);
-	write( fdWB, wbuf, 1);  
+	if(chnel == 64) //56M带宽
+	{
+		printf("56M带宽\n");
+		switch(cmd)
+		{
+			case 1:
+				wbuf[0] = 21; 
+				break;
+			case 2:
+				wbuf[0] = 22;
+				break;	
+			case 3:
+				wbuf[0] = 23;
+				break;
+			case 4:
+				wbuf[0] = 24;
+				break;
+			default:
+				printf("set_WB cmd = %d\n", cmd);
+		}
+		write( fdWB, wbuf, 1);  
+	}
+	if(chnel == 128) //118M带宽
+	{
+		printf("118M带宽\n");
+		switch(cmd)
+		{
+			case 1:
+				wbuf[0] = 11; 
+				break;
+			case 2:
+				wbuf[0] = 12;
+				break;	
+			default:
+				printf("set_WB cmd = %d\n", cmd);
+		}
+		write( fdWB, wbuf, 1);  
+	}
+	
 //------------关闭uart设备文件，恢复原先参数--------  
     close(fdWB);  
     printf("Close %s\n", UART_DEVICE);  
@@ -679,9 +710,27 @@ void pthread_read()
 	char DA_power[DATALEN] = {0};
 	char AD_power[DATALEN] = {0};
 	char WB_mode[DATALEN] = {0};
+	FILE *fp;
+	char wbuf[128];
+	
+	char ip[DATALEN*4] = {0};
+	char mac[DATALEN*4] = {0};
+	char date[DATALEN*4] = {0};	
+	FILE *fp_ip;
+	char ipbuf[128] = {0};
+	FILE *fp_mac;
+	char macbuf[128] = {0};
+	FILE *fp_ston;
+	char stonbuf[128] = {0};
+	char buf_number[16] = {0};
+	char buf_name[64] = {0};
+	char buf_longitude[10] = {0};
+	char buf_atitude[10] = {0};
+	
 	flag = 0;
 	heart = 100000;
 	printf("pthread_read fd = %d\n",fd);
+	
 	
 	while(1)
 	{	
@@ -755,8 +804,6 @@ void pthread_read()
 			printf(" Msg type=%c, Modulation=%s, Channel=%s, Data_source=%s, Code_ratio=%s, interleaver_depth=%s, Digital_Loopback=%s, DA_power=%s, AD_power=%s, WB_mode=%s\n",
 				type, Modulation, Channel, Data_source, Code_ratio, interleaver_depth, Digital_Loopback, DA_power, AD_power, WB_mode);
 			
-			FILE *fp;
-			char wbuf[128];
 			
 			if((fp = fopen("config.txt","w+"))==NULL)//打开文件，之后判断是否打开成功
 			{
@@ -1936,6 +1983,127 @@ void pthread_read()
 			{
 				wReg("rx_digital_loop_ena", wdata);
 			}
+		}
+		
+		if(type == 'Z')//set ip
+		{
+			for( i = 0; i < DATALEN*4; i++)
+			{
+				ip[i] = buf[1+i];
+			}
+			bzero(ipbuf,128);
+			sprintf(ipbuf, "ifconfig eth0 %s\n", ip);
+			printf("ipbuf = %s",ipbuf);
+			system(ipbuf);
+
+			if((fp_ip = fopen("ip.sh","w+"))==NULL)//打开文件，之后判断是否打开成功
+			{
+				perror("cannot open file");
+				exit(0);
+			}
+			fputs(ipbuf, fp_ip);
+			
+			fclose(fp_ip);
+		}
+		if(type == 'Y')//set mac
+		{
+			for( i = 0; i < DATALEN*4; i++)
+			{
+				mac[i] = buf[1+i];
+			}
+			bzero(macbuf,128);
+			sprintf(macbuf, "ifconfig eth0 hw ether %s\n", mac);
+			printf("macbuf = %s",macbuf);
+			system("ifconfig eth0 down\n");
+			system(macbuf);
+			system("ifconfig eth0 up\n");
+
+			if((fp_mac = fopen("mac.sh","w+"))==NULL)//打开文件，之后判断是否打开成功
+			{
+				perror("cannot open file");
+				exit(0);
+			}
+			fputs("ifcofnig eth0 down\n", fp_mac);
+			fputs(macbuf, fp_mac);
+			fputs("ifcofnig eth0 up\n", fp_mac);
+			
+			fclose(fp_mac);
+			
+		}
+		if(type == 'X')//set date
+		{
+			for( i = 0; i < DATALEN*4; i++)
+			{
+				date[i] = buf[1+i];
+			}
+			char datebuf[128] = "date -s \"";
+			datebuf[9] = date[0];
+			datebuf[10] = date[1]; 
+			datebuf[11] = date[2];
+			datebuf[12] = date[3];//year
+			datebuf[13] = '-';
+			datebuf[14] = date[4];
+			datebuf[15] = date[5];
+			datebuf[16] = '-';
+			datebuf[17] = date[6];
+			datebuf[18] = date[7];
+			datebuf[19] = ' ';
+			datebuf[20] = date[8];
+			datebuf[21] = date[9];//时
+			datebuf[22] = date[10];
+			datebuf[23] = date[11];
+			datebuf[24] = date[12];//分
+			datebuf[25] = date[13];
+			datebuf[26] = date[14];
+			datebuf[27] = date[15];//秒
+			datebuf[28] = '"';
+			datebuf[28] = '\n';
+			printf("datebuf = %s",datebuf);
+			system(datebuf);
+			system("hwclock -w\n"); //硬件时钟同步
+		}
+		if(type == 'W')//站点信息
+		{
+			for( i = 0; i < 16; i++)
+			{
+				buf_number[i] = buf[1+i];
+			}
+			for( i = 0; i < 64; i++)
+			{
+				buf_name[i] = buf[17+i];
+			}
+			for( i = 0; i < 10; i++)
+			{
+				buf_longitude[i] = buf[81+i];
+			}
+			for( i = 0; i < 10; i++)
+			{
+				buf_atitude[i] = buf[91+i];
+			}
+			
+			if((fp_ston = fopen("stationmsg.txt","r+"))==NULL)//打开文件，之后判断是否打开成功
+			{
+				perror("cannot open file");
+				exit(0);
+			}
+			
+			bzero(stonbuf,128);
+			sprintf(stonbuf, "number:%s\n", buf_number);
+			fputs(stonbuf, fp_ston);
+			
+			bzero(stonbuf,128);
+			sprintf(stonbuf, "name:%d\n", buf_name);
+			fputs(stonbuf, fp_ston);
+			
+			bzero(stonbuf,128);
+			sprintf(stonbuf, "longitude:%s\n", buf_longitude);
+			fputs(stonbuf, fp_ston);
+			
+			bzero(stonbuf,128);
+			sprintf(stonbuf, "atitude:%s\n", buf_atitude);
+			fputs(stonbuf, fp_ston);
+			
+			fclose(fp_ston);
 		}
 	}
 	return;
